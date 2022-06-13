@@ -142,7 +142,7 @@ LRESULT CALLBACK MyWindowFunc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
     BufLen = wsprintf(Buf, "%02d.%02d.%d %02d:%02d:%02d", st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
     GetTextExtentPoint(hMemDC, Buf, BufLen, &sz);
-    TextOut(hMemDC, (w - sz.cx) / 2, 300, Buf, BufLen);
+    TextOut(hMemDC, (w - sz.cx) / 2, 60, Buf, BufLen);
     SelectObject(hMemDC, hFntOld);
     DeleteObject(hFnt);
 

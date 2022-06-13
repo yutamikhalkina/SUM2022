@@ -4,14 +4,8 @@
  * PURPOSE: Draw a globe
  */
 
-#include <windows.h>
-
-typedef DOUBLE DBL;
-
-typedef struct
-{
-  DBL X, Y, Z;
-} VEC;
+#include "timer.h"
+#include "mth.h"
 
 VOID GlobeSet( DBL R );
 VOID GlobeDraw( HDC hDc, INT w, INT h );

@@ -1,14 +1,13 @@
-/* FILE NAME: t06globe.c
- * PROGRAMMER: YM5
- * DATE 06.06.2022
- * PURPOSE: Draw a globe
+/* FILE NAME: main.c
+ * PROGRAMMER : YM5
+ * LAST UPDATE : 08.06.2022
+ * PURPOSE : 3D animation project.
+ *           Startup Module.
  */
+ 
+#include <time.h>
 
-#include <stdlib.h>
-#include <windows.h>
-#include <math.h>
-
-#include "globe.h"
+#include "ym5.h"
 
 /* Main window class name */
 #define WND_CLASS_NAME "My window class"
@@ -25,7 +24,7 @@ INT WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
   MSG msg;
   HBRUSH hbr;
 
-  hbr = CreateSolidBrush(RGB(220, 150, 150));
+  hbr = CreateSolidBrush(RGB(180, 240, 190));
 
   wc.style = CS_VREDRAW | CS_HREDRAW;
   wc.cbClsExtra = 0;
@@ -49,6 +48,8 @@ INT WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
   ShowWindow(hWnd, SW_SHOWNORMAL);
   UpdateWindow(hWnd);
 
+  YM5_AnimUnitAdd(YM5_AnimUnitCreateCow());
+
   while (GetMessage(&msg, NULL, 0, 0))
   {
     TranslateMessage(&msg);
@@ -62,67 +63,43 @@ LRESULT CALLBACK MyWindowFunc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 {
   HDC hDC;
   PAINTSTRUCT ps;
-  static INT w, h;
-  static HDC hMemDC;
-  static HBITMAP hBm;
-
+  
   switch (Msg)
   {
+  case WM_GETMINMAXINFO:
+    ((MINMAXINFO *)lParam)->ptMaxTrackSize.y =
+      GetSystemMetrics(SM_CYMAXTRACK) + GetSystemMetrics(SM_CYCAPTION) + 2 * GetSystemMetrics(SM_CYBORDER);
+    return 0;
+
   case WM_CREATE:
-    hDC = GetDC(hWnd);
-    hMemDC = CreateCompatibleDC(hDC);
-    ReleaseDC(hWnd, hDC);
     SetTimer(hWnd, 30, 30, NULL);
-    GLB_TimerInit();
-    GlobeSet(1.0);
+    YM5_AnimInit(hWnd);
     return 0;
 
   case WM_SIZE:
-    w = LOWORD(lParam);
-    h = HIWORD(lParam);
-    if (hBm != NULL)
-      DeleteObject(hBm);
-    hDC = GetDC(hWnd);
-    hBm = CreateCompatibleBitmap(hDC, w, h);
-    ReleaseDC(hWnd, hDC);
-    SelectObject(hMemDC, hBm);
-
+    YM5_AnimResize(LOWORD(lParam), HIWORD(lParam));
     SendMessage(hWnd, WM_TIMER, 0, 0);
     return 0;
 
-  case WM_PAINT:
-    hDC = BeginPaint(hWnd, &ps);
-    BitBlt(hDC, 0, 0, w, h, hMemDC, 0, 0, SRCCOPY);
-    EndPaint(hWnd, &ps);
-    return 0;
-
   case WM_TIMER:
+    YM5_AnimRender();
 
-    /* clear background */
-    SelectObject(hMemDC, GetStockObject(DC_BRUSH));
-    SelectObject(hMemDC, GetStockObject(NULL_PEN));
-    SetDCBrushColor(hMemDC, RGB(0, 0, 0));
-    Rectangle(hMemDC, 0, 0, w, h);
-
-    GLB_TimerResponse();
-
-    SelectObject(hMemDC, GetStockObject(DC_PEN));
-    SelectObject(hMemDC, GetStockObject(DC_BRUSH));
-    SetDCPenColor(hMemDC, RGB(220, 30, 40));
-    SetDCBrushColor(hMemDC, RGB(40, 40, 40));
-    GlobeDraw(hMemDC, w, h);
-    /*RotateZ(P, Angle);*/
-
-    /* copy back buffer to screen */
     hDC = GetDC(hWnd);
-    BitBlt(hDC, 0, 0, w, h, hMemDC, 0, 0, SRCCOPY);
+    YM5_AnimCopyFrame(hDC);
     ReleaseDC(hWnd, hDC);
     return 0;
 
+  case WM_ERASEBKGND:
+    return 1;
+
+  case WM_PAINT:
+    hDC = BeginPaint(hWnd, &ps);
+    YM5_AnimCopyFrame(hDC);
+    EndPaint(hWnd, &ps);
+    return 0;
+
   case WM_DESTROY:
-    if (hBm != NULL)
-      DeleteObject(hBm);
-    DeleteDC(hMemDC);
+    YM5_AnimClose();
     KillTimer(hWnd, 30);
     PostQuitMessage(30);
     return 0;
@@ -131,3 +108,4 @@ LRESULT CALLBACK MyWindowFunc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
   return DefWindowProc(hWnd, Msg, wParam, lParam);
 } /*end of MyWindowFunc */
 
+/* END OF 'main.c' FILE */
